@@ -1,0 +1,10 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "clangd.path": "/home/pfasantos/.espressif/tools/esp-clang/esp-19.1.2_20250312/esp-clang/bin/clangd",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=**",
+    "--compile-commands-dir=/home/pfasantos/Desktop/phiot/projeto1/phiot-1/build"
+  ],
+  "idf.currentSetup": "/home/pfasantos/.espressif/v5.5.2/esp-idf"
+}
