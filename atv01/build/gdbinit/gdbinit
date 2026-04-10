@@ -1,0 +1,2 @@
+source /home/yuri/esp/projects/atv02/build/gdbinit/symbols
+source /home/yuri/esp/projects/atv02/build/gdbinit/connect
