@@ -29,7 +29,7 @@ void send_trigger(void){
     // sends 10us high level signal
     start_time = esp_timer_get_time();
     gpio_set_level(TRIG_PIN, 1);
-    while(now - start_time <= interval){
+    while(now - start_time < interval){
         now = esp_timer_get_time();
     }
     gpio_set_level(TRIG_PIN, 0);
