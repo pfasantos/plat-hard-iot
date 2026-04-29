@@ -1,78 +1,66 @@
-#include <stdio.h>
 #include "driver/gpio.h"
-#include "freertos/FreeRTOS.h"
-#include "esp_timer.h"
 #include "esp_log.h"
+#include "esp_timer.h"
+#include "freertos/FreeRTOS.h"
+#include <stdio.h>
 
 // TAGS
 #define GPIO_TAG "gpio_conf"
 #define TRIG_TAG "trigger"
 #define MAIN_TAG "main"
 
-//pins
-#define TRIG_PIN GPIO_NUM_17
-#define ECHO_PIN GPIO_NUM_16
+// pins
+#define TRIG_PIN GPIO_NUM_3
+#define ECHO_PIN GPIO_NUM_8
 
 #define MAX_DISTANCE_CM 300
 
-void pin_configurations(void){
-    gpio_set_direction(TRIG_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_direction(ECHO_PIN, GPIO_MODE_INPUT);
-    gpio_set_level(TRIG_PIN, 0);
-    ESP_LOGI(GPIO_TAG, "GPIO pins configured\n");
+void pin_configurations(void) {
+  gpio_config_t echo = {.pin_bit_mask = (1ULL << ECHO_PIN),
+                        .mode = GPIO_MODE_INPUT,
+                        .pull_down_en = 1,
+                        .pull_up_en = 0,
+                        .intr_type = GPIO_INTR_ANYEDGE};
+
+  gpio_config(&echo);
+  gpio_set_direction(ECHO_PIN, GPIO_MODE_INPUT);
+  gpio_set_level(TRIG_PIN, 0);
+  ESP_LOGI(GPIO_TAG, "GPIO pins configured\n");
 }
 
-void send_trigger(void){
-    int64_t start_time;
-    int64_t now = 0;
-    int64_t interval = 10;
-    
-    // sends 10us high level signal
-    start_time = esp_timer_get_time();
-    gpio_set_level(TRIG_PIN, 1);
-    while(now - start_time <= interval){
-        now = esp_timer_get_time();
-    }
-    gpio_set_level(TRIG_PIN, 0);
-    ESP_LOGI(TRIG_TAG, "Trigger sent\n");
+void send_trigger(void) {
+  int64_t start_time;
+  int64_t now = 0;
+  int64_t interval = 10;
+
+  // sends 10us high level signal
+  start_time = esp_timer_get_time();
+  gpio_set_level(TRIG_PIN, 1);
+  while (now - start_time <= interval) {
+    now = esp_timer_get_time();
+  }
+  gpio_set_level(TRIG_PIN, 0);
+  ESP_LOGI(TRIG_TAG, "Trigger sent\n");
 }
 
-void app_main(void)
-{
+static void gpio_isr_handler(void *) {
+  int level = gpio_get_level(ECHO_PIN);
 
-    int64_t range, high_time, start_time, end_time;
-    int echo_level, trig_ok = 1;
+  if (level) {
 
-    pin_configurations();
+  } else {
+  }
+}
 
-    while(1){
-        // sends trigger if allowed
-        if (trig_ok) {
-            send_trigger();
-        }
+void app_main(void) {
 
-        echo_level = gpio_get_level(ECHO_PIN);
+  int echo_level;
 
-        if (echo_level) {
-            start_time = esp_timer_get_time();
+  pin_configurations();
 
-            // wait untill echo level gets low
-            while(echo_level) {
-                echo_level = gpio_get_level(ECHO_PIN);
-            }
-            end_time = esp_timer_get_time();
-           
-            // calculate range (i just tested random things untill the result was in cm)
-            high_time = (end_time - start_time);
-            range = 3.4029 * high_time /200;
+  gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
+  gpio_isr_handler_add(ECHO_PIN, gpio_isr_handler, NULL);
 
-            if (range > MAX_DISTANCE_CM) {
-               range = 0;
-            }
-
-            ESP_LOGI("DISTANCE", "%lld cm", range);
-            trig_ok =1;
-            vTaskDelay(pdMS_TO_TICKS(1000));
-        }
-    }
+  while (1)
+    ;
 }
