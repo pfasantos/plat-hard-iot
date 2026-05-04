@@ -10,10 +10,13 @@
 #define MAIN_TAG "main"
 
 // pins
-#define TRIG_PIN GPIO_NUM_3
-#define ECHO_PIN GPIO_NUM_8
+#define TRIG_PIN GPIO_NUM_5
+#define ECHO_PIN GPIO_NUM_4
 
 #define MAX_DISTANCE_CM 300
+
+volatile int flag =0;
+volatile bool trigg =true;
 
 void pin_configurations(void) {
   gpio_config_t echo = {.pin_bit_mask = (1ULL << ECHO_PIN),
@@ -23,7 +26,7 @@ void pin_configurations(void) {
                         .intr_type = GPIO_INTR_ANYEDGE};
 
   gpio_config(&echo);
-  gpio_set_direction(ECHO_PIN, GPIO_MODE_INPUT);
+  gpio_set_direction(TRIG_PIN, GPIO_MODE_OUTPUT);
   gpio_set_level(TRIG_PIN, 0);
   ESP_LOGI(GPIO_TAG, "GPIO pins configured\n");
 }
@@ -40,27 +43,47 @@ void send_trigger(void) {
     now = esp_timer_get_time();
   }
   gpio_set_level(TRIG_PIN, 0);
+  printf("TRIGGER");
   ESP_LOGI(TRIG_TAG, "Trigger sent\n");
 }
 
 static void gpio_isr_handler(void *) {
-  int level = gpio_get_level(ECHO_PIN);
-
-  if (level) {
-
-  } else {
-  }
+  flag = gpio_get_level(ECHO_PIN);
 }
 
 void app_main(void) {
 
-  int echo_level;
-
+  int timeok = 1;
+  int64_t range =0, high_time, start_time =0, end_time;
   pin_configurations();
 
-  gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
+  gpio_install_isr_service(ESP_INTR_FLAG_LEVEL1);
   gpio_isr_handler_add(ECHO_PIN, gpio_isr_handler, NULL);
 
-  while (1)
-    ;
+    xQueueCreate(1, sizeof(int));
+  while (1) {
+    if (trigg) {
+      send_trigger();
+      timeok = 1;
+      trigg = false;
+      printf("ENTROU TRIG\n");
+    } else {
+      printf("N ENTROU TRIG\n");
+    }
+
+
+    printf("FLAG: %d\nTIME: %d\n", flag, timeok);
+    if (flag && timeok) {
+      start_time = esp_timer_get_time();
+      timeok =0;
+      printf("ENTROU NO TIMEOK\n");
+    } else if (!flag) {
+      end_time = esp_timer_get_time();
+      high_time = (end_time - start_time);
+      range = high_time / 58;
+      printf("range :%lld \n", range);
+      trigg=true;
+      printf("ENTROU NO ELSE\n");
+  }
+}
 }
