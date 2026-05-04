@@ -6,7 +6,7 @@
     "--query-driver=**",
     "--compile-commands-dir=/home/pfasantos/Desktop/phiot/distance/build"
   ],
-  "idf.currentSetup": "/home/pfasantos/.espressif/v5.5.2/esp-idf",
+  "idf.currentSetup": "/home/pfasantos/.espressif/v6.0/esp-idf",
   "idf.openOcdConfigs": [
     "board/esp32s3-builtin.cfg"
   ],
